@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Zotero 文献流",
+    "description": "连接 Zotero：在机构登录会话下从知网、万方、ScienceDirect、IEEE 等数据库获取文献 PDF，并把条目连同 PDF 归档到指定分类。"
+  }
+}

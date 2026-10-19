@@ -1,0 +1,62 @@
+{
+  "name": "dsh-zotero-flow",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "连接 Zotero：在机构登录会话下从各大数据库与出版社获取文献 PDF，并把条目连同 PDF 归入指定 Zotero 分类。",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "icon": "./icon.svg",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client/client.js",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "index.js",
+    "lib",
+    "client",
+    "skills",
+    "locale",
+    "icon.svg",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YHzed/dsh-zotero-flow.git"
+  },
+  "homepage": "https://github.com/YHzed/dsh-zotero-flow#readme",
+  "bugs": {
+    "url": "https://github.com/YHzed/dsh-zotero-flow/issues"
+  },
+  "scripts": {
+    "test": "node scripts/test-tools.mjs",
+    "selftest:browser": "node scripts/selftest-browser.mjs",
+    "selftest:zotero": "node scripts/test-zotero-write.mjs",
+    "pack": "npm pack"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "zotero",
+    "literature",
+    "pdf"
+  ]
+}

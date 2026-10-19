@@ -1,0 +1,18 @@
+# 依赖与构建产物
+node_modules/
+dist/
+*.tgz
+
+# 机构专属的一次性探针脚本（含校内主机名，不对外发布）
+scripts/probe-vpn.mjs
+scripts/verify-vpn-chain.mjs
+
+# 运行期产物
+downloads/
+*.log
+
+# 编辑器 / 系统
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

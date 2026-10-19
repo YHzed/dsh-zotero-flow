@@ -1,0 +1,23 @@
+# 把 dsh-zotero-flow 挂进当前 profile 的组合层。
+# 用户可在 profile 的 cordis.patch.yml 里覆写这里的 config。
+- insert:
+    - id: dsh-zotero-flow
+      name: 'dsh-zotero-flow'
+      config:
+        # Zotero 桌面端本地 HTTP 服务端口（Zotero 高级设置中的 httpServer.port）
+        zoteroPort: 23119
+        # 用于 Crossref / Unpaywall「礼貌池」的联系邮箱，建议填自己的
+        mailto: ''
+        # 浏览器：留空则自动探测 Edge / Chrome
+        browserPath: ''
+        # 机构登录用的独立浏览器资料目录；留空则用 <用户目录>/.dsh-zotero-flow/edge-profile
+        browserProfileDir: ''
+        # CDP 调试端口
+        cdpPort: 9333
+        # PDF 下载落盘目录；留空则用 <用户目录>/.dsh-zotero-flow/downloads
+        downloadDir: ''
+        # 机构代理前缀，例如 WebVPN：https://webvpn.example.edu.cn/http/ 或 EZproxy：
+        # https://login.ezproxy.example.edu/login?url=
+        institutionProxy: ''
+        # 出网代理（仅影响插件的 HTTP 抓取，不影响浏览器）
+        proxyUrl: ''

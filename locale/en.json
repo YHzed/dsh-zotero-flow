@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Zotero Literature Flow",
+    "description": "Connects to Zotero: fetch article PDFs from CNKI, Wanfang, ScienceDirect, IEEE and more through your institution's logged-in session, then file each item and its PDF into a chosen collection."
+  }
+}
