@@ -261,6 +261,12 @@ window.__ModuleLoader__.load({
       });
     }
 
+    function archiveHeading(meta, title) {
+      const prefix = meta.action === 'duplicate' ? '相同 PDF 已存在，已跳过'
+        : meta.action === 'reused' ? '已补附件到已有条目' : '已归档';
+      return `${prefix}：${title ?? ''}`;
+    }
+
     function SaveView({ callId, block }) {
       return h(Wrap, {
         callId,
@@ -272,9 +278,9 @@ window.__ModuleLoader__.load({
           const pdf = meta.pdf ?? {};
           const warnings = Array.isArray(meta.warnings) ? meta.warnings : [];
           return h(Shell, {
-            title: meta.saved ? `已归档：${item.title ?? ''}` : '归档未完成',
+            title: meta.saved ? archiveHeading(meta, item.title) : '归档未完成',
             tone: meta.saved ? 'ok' : 'bad',
-            footer: target.name ? `分类：${target.name}（${target.targetId ?? ''}）` : undefined,
+            footer: target.preserved ? '原条目及分类保持不变' : (target.name ? `分类：${target.name}（${target.targetId ?? ''}）` : undefined),
           },
             item.doi ? h(Row, { label: 'DOI' }, h('span', { className: 'zf-mono' }, item.doi)) : null,
             h(Row, { label: 'PDF' }, pdf.saved ? `${pdf.filename ?? ''}（${Math.round((pdf.size ?? 0) / 1024)} KB，${pdf.via ?? ''}）` : '未挂载'),
@@ -297,11 +303,11 @@ window.__ModuleLoader__.load({
           const target = meta.target ?? {};
           const warnings = Array.isArray(meta.warnings) ? meta.warnings : [];
           return h(Shell, {
-            title: meta.saved ? `已归档：${item.title ?? ''}` : '导入未完成',
+            title: meta.saved ? archiveHeading(meta, item.title) : '导入未完成',
             tone: meta.saved ? 'ok' : 'bad',
-            footer: target.name ? `分类：${target.name}（${target.targetId ?? ''}）` : undefined,
+            footer: target.preserved ? '原条目及分类保持不变' : (target.name ? `分类：${target.name}（${target.targetId ?? ''}）` : undefined),
           },
-            h(Row, { label: '识别方式' }, meta.mode === 'doi' ? '从 PDF 里抠到 DOI' : (meta.mode === 'standalone' ? '交给 Zotero 自动识别' : '按标题检索')),
+            h(Row, { label: '处理方式' }, meta.action === 'duplicate' ? '相同 PDF 已存在' : (meta.action === 'reused' ? '复用已有书目' : (meta.mode === 'standalone' ? '交给 Zotero 自动识别' : '查重后新建书目'))),
             item.doi ? h(Row, { label: 'DOI' }, h('span', { className: 'zf-mono' }, item.doi)) : null,
             h('div', null, warnings.map((warning, index) => h('div', { className: 'zf-warn', key: index }, `注意：${warning}`))),
           );

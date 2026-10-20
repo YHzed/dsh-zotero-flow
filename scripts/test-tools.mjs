@@ -42,6 +42,8 @@ const EXPECTED_TOOLS = [
   'zotero_collections',
   'zotero_save',
   'zotero_import_pdf',
+  'zotero_search',
+  'zotero_attach_pdf',
 ];
 const names = registered.map((tool) => tool.name);
 check('工具齐全', EXPECTED_TOOLS.every((tool) => names.includes(tool)), names.join(', '));
