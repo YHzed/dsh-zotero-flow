@@ -14,7 +14,7 @@
         browserProfileDir: ''
         # CDP 调试端口
         cdpPort: 9333
-        # PDF 下载落盘目录；留空则用 <用户目录>/.dsh-zotero-flow/downloads
+        # PDF 下载目录；留空使用 <用户目录>/.dsh-zotero-flow/downloads
         downloadDir: ''
         # 机构代理前缀，例如 WebVPN：https://webvpn.example.edu.cn/http/ 或 EZproxy：
         # https://login.ezproxy.example.edu/login?url=

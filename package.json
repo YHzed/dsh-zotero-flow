@@ -1,6 +1,6 @@
 {
   "name": "dsh-zotero-flow",
-  "version": "1.0.0",
+  "version": "1.0.5",
   "private": true,
   "type": "module",
   "description": "连接 Zotero：在机构登录会话下从各大数据库与出版社获取文献 PDF，并把条目连同 PDF 归入指定 Zotero 分类。",
@@ -47,7 +47,10 @@
     "url": "https://github.com/YHzed/dsh-zotero-flow/issues"
   },
   "scripts": {
-    "test": "node scripts/test-tools.mjs",
+    "test": "node --test scripts/security-*.test.mjs scripts/test-existing-attachment.mjs scripts/test-attach-tool.mjs scripts/test-import-dedup.mjs",
+    "test:attachments": "node --test scripts/test-existing-attachment.mjs scripts/test-attach-tool.mjs",
+    "test:imports": "node --test scripts/test-import-dedup.mjs",
+    "selftest:integration": "node scripts/test-tools.mjs",
     "selftest:browser": "node scripts/selftest-browser.mjs",
     "selftest:zotero": "node scripts/test-zotero-write.mjs",
     "pack": "npm pack"
