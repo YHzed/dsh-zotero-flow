@@ -17,7 +17,7 @@
 ## Evidence
 
 - **Before:** 源码中浏览器启动含 `--remote-allow-origins=*`；本地 PDF 直接 `readFile`；下载通道落盘后再写副本；OpenAlex 稀疏索引没有上界；默认测试会访问真实服务。未运行旧版真实服务测试。
-  **After:** `npm test`：19 passed / 0 failed，使用模拟 fetch、CDP 与 Zotero。覆盖非网页/私网字面量目的地、文档拦截、429 停手、校验后禁止 Zotero 回退、PDF 签名与大小、端口、稀疏摘要及已有路径复用。
+  **After:** `npm test`：25 passed / 0 failed（包含实际页面分析脚本的 VM 执行、标题验证码、原页面/SSO 关闭边界及 PDF PII 匹配），使用模拟 fetch、CDP 与 Zotero。覆盖非网页/私网字面量目的地、文档拦截、429 停手、校验后禁止 Zotero 回退、PDF 签名与大小、端口、稀疏摘要及已有路径复用。
 - `node --check`：入口、browser、tools 通过。
 - `git diff --check`：通过。
 - `npm pack --dry-run --json`：17 个发布文件，无 PDF、profile、登录记录、凭据、host-inspect 或构建归档。
