@@ -29,6 +29,27 @@ DOI/标题  →  规范元数据  →  机构登录会话里取 PDF  →  归档
 
 ---
 
+## 安全收紧与逐篇下载
+
+- 优先提取当前文献的 PDF 直链，核对 DOI/PII，避免误取参考文献链接；没有直链的中文库仍由用户点击。
+- 成功后仅关闭插件创建的取全文页及仍停在原地址的关联文献页。失败、验证码和用户自行打开的登录页保留；浏览器和登录资料目录不关闭、不清理。
+- 浏览器已经下载的 PDF 复用原路径，不另存重复副本。`saveAs` 只用于从内存响应体新建文件。
+- 校验 PDF 文件头、常规文件类型及 **128 MiB** 上限；新建文件使用独占创建，拒绝覆盖已有文件或符号链接目标。
+- 参数只接受不含账号密码的 HTTP(S) URL；阻止 localhost、私网 IP 字面量和非网页协议。文档请求重定向同样检查。**这不是完整 SSRF/DNS 重绑定防火墙**：域名解析及浏览器子资源仍由浏览器/操作系统管理，机构 WebVPN 域名可正常使用。
+- CDP 仅使用本机地址，取消任意来源通配符，验证调试端点；Zotero 只接受 loopback IP，禁止跟随 HTTP 重定向。
+- 403、429 和检测到的人机校验停止自动下载及归档，不自动调用 Zotero 解析器换入口。页面检测为启发式，不能保证识别所有站点校验。
+- 单控制器拒绝重叠导航/取全文操作，等待参数有明确上限。
+
+### 离线回归测试
+
+```bash
+npm test
+```
+
+默认测试全部使用模拟 CDP、fetch 和 Zotero，不启动真实浏览器、不联网、不写真实文献库。原联网体检移到 `npm run selftest:integration`，需要人工明确选择；浏览器/Zotero 写入自检同样不是默认测试的一部分。
+
+本次保留本地 1.0.1 的入口/技能注册改动，不把 `host-inspect`、浏览器 profile、PDF、登录记录或任何凭据纳入版本库。
+
 ## 安装
 
 插件是一个标准的 DSH 组合包（`package.json` 里声明了 `dsh.bundle.patch`）。
@@ -200,9 +221,8 @@ Zotero 的 `Zotero.Attachments.importFromNetworkStream` 在 `url` 为空 / 缺�
 CDP 根本拿不到字节。插件在自己的资料目录里把 `plugins.always_open_pdf_externally` 设为 true，
 PDF 直接进 `downloadDir` —— 既拿到字节，用户也顺手得到文件。这个设置只影响插件自己的资料目录。
 
-**⑥ 无法把 PDF 挂到「库里已有的旧条目」上。**
-连接器的 `saveAttachment` 只能挂到同一次会话（`saveItems` 之后）里创建的条目，且本地 API 是只读的。
-所以流程是「建条目 + 挂 PDF 一次做完」；对已有 PDF 用 `zotero_import_pdf`（会重新建条目）。
+**⑥ 已有条目补附件需要 Zotero 10+ 本地 API 与原生写入授权。**
+连接器的 `saveAttachment` 仅适用于同次会话新建条目；已有条目通过本地 API 追加附件。自动导入先查重，复用已有父条目并保留分类，确认不存在才新建。当前自动查重仅支持个人文库；群组目标会停止，避免跨库误匹配。
 
 **⑦ 不做反检测规避，也不自动过验证。**
 站点起疑（403 / 429 / 验证页）时，插件与 agent 的动作是停下、放慢、把页面交回给你；
@@ -216,7 +236,7 @@ PDF 直接进 `downloadDir` —— 既拿到字节，用户也顺手得到文件
 | 现象 | 原因 / 处理 |
 | --- | --- |
 | `Zotero 未响应` | Zotero 桌面端没开，或端口被改过（同步改 `zoteroPort`） |
-| `本地 API 未开启` | 正常状态，只是分类树与库内检索受限；需要就按上文勾选 |
+| `本地 API 未开启` | 自动导入会停止，以免无法查重而重复建条目；按上文开启后重试 |
 | `Zotero 挂载 PDF 失败（HTTP 500）` | 见「已知边界 ③」，通常是来源 URL 为空 |
 | 浏览器起不来 | 未装 Edge/Chrome，或 `cdpPort` 被占用；用 `browserPath` 显式指定 |
 | 抓不到 PDF | 页面需要登录 / 有人机校验 / 无订阅权限；`scholar_session` 的返回里会带「页面迹象」 |
@@ -224,16 +244,16 @@ PDF 直接进 `downloadDir` —— 既拿到字节，用户也顺手得到文件
 | 某平台提示需要登录 | 先看机构登录记录：没登录过就提醒你登录；记录里已登录却仍停在登录页，说明会话失效，重新登录后更新记录 |
 | 归档到了错的分类 | `zotero_collections action=targets` 看可选目标，在 Zotero 里点选正确分类后重试 |
 
-自检脚本（在插件目录下，也可以 `npm test` / `npm run selftest:browser` / `npm run selftest:zotero`）：
+测试入口（默认 `npm test` 只运行离线模拟回归，不连接真实 Zotero、不写库）：
 
 ```bash
 node scripts/test-tools.mjs          # 只读：加载插件、跑不写库的工具
 node scripts/selftest-browser.mjs    # 浏览器会话 + CDP PDF 抓取（本地起服务，不依赖外网）
-node scripts/test-zotero-write.mjs   # 写库：会往 Zotero 里存一条带自检标记的测试条目
+npm test                            # 默认离线安全、附件和导入回归测试
 node scripts/session.mjs status      # 手动驱动机构登录会话（同 lib/browser.js）
 ```
 
-`test-zotero-write.mjs` 会真的写入你的库，标题里带「插件自检请删除」、标签 `dsh-zotero-flow-selftest`，跑完请自行删除。
+旧 `selftest:zotero` 已禁用：其真实 DOI 测试可能向已有真实文献追加合成 PDF。真实写入验证应仅在隔离的 Zotero 测试资料目录中、明确选定测试条目和文件后执行。`selftest:integration` 是显式只读集成测试，依赖运行中的 Zotero 与外部元数据服务。
 
 ---
 
@@ -243,10 +263,10 @@ node scripts/session.mjs status      # 手动驱动机构登录会话（同 lib/
 index.js                 插件入口：注册工具 / 技能 / 系统提示
 lib/define-tool.js       本地 defineTool（schema DSL → JSON Schema），不依赖宿主包
 lib/catalog.js           数据资源站点目录、DOI 前缀 → 出版社映射
-lib/zotero.js            Zotero 客户端（连接器 API + 只读本地 API）
+lib/zotero.js            Zotero 客户端（连接器 + 本地 API 检索和授权写入）
 lib/metadata.js          Crossref / OpenAlex / Unpaywall / PDF 内 DOI 抽取
 lib/browser.js           Edge CDP 会话、页面分析、三通道 PDF 抓取
-lib/tools.js             8 个工具的定义与实现、归档主流程
+lib/tools.js             工具定义、查重和归档主流程
 client/client.js         浏览器端 Toolview（含数据库网格卡片）
 skills/literature-flow/  技能正文
 ```

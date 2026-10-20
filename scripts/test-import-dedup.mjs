@@ -19,7 +19,7 @@ function runtime({ items = [], attachments = [], incomplete = false, searchError
   const rt = { config: {}, browser: { capturePdf: async () => ({ bytes, finalUrl: 'https://example.org/paper.pdf' }) },
     http: { json: async () => undefined }, zotero: {
       findImportCandidates: async () => { calls.push('search'); if (searchError) throw searchError; return { complete: !incomplete, items, attachments }; },
-      getTargets: async () => { calls.push('targets'); return {}; },
+      getTargets: async () => { calls.push('targets'); return { libraryID: 1, id: 1 }; },
       resolveTarget: () => ({ name: 'New', targetId: 'C1', source: 'current' }), targetsOf: () => [],
       saveItem: async () => { calls.push('saveItem'); return { sessionId: 's', itemKey: 'dsh-item-1' }; },
       updateSession: async () => { calls.push('updateSession'); },
@@ -56,12 +56,20 @@ try {
       tests++;
     }
   }
+  for (const name of ['zotero_save', 'zotero_import_pdf']) {
+    for (const payload of [{ libraryID: 2, id: 1 }, {}, { libraryID: 1, id: 2 }]) {
+      const scoped = prepare(runtime({ items: [parent] }));
+      scoped.zotero.getTargets = async () => { scoped.calls.push('targets'); return payload; };
+      await assert.rejects(tool(scoped, name).execute({ title, pdfPath, fetchOpenAccess: false }), { code: 'IMPORT_LIBRARY_UNSUPPORTED' });
+      assert.deepEqual(scoped.calls, ['targets']); tests++;
+    }
+  }
   const rt = prepare(runtime({ attachments: [{ key: 'BCDEFGHJ', itemType: 'attachment', md5: createHash('md5').update(bytes).digest('hex') }] }));
   const duplicate = await tool(rt, 'zotero_import_pdf').execute({ pdfPath });
   assert.equal(duplicate.action, 'duplicate'); assert(!rt.calls.includes('standalone')); tests++;
   const empty = prepare(runtime());
   const standalone = await tool(empty, 'zotero_import_pdf').execute({ pdfPath });
-  assert.equal(standalone.mode, 'standalone'); assert.deepEqual(empty.calls, ['search', 'targets', 'standalone']); tests++;
+  assert.equal(standalone.mode, 'standalone'); assert.deepEqual(empty.calls, ['targets', 'search', 'standalone']); tests++;
   const invalidPath = path.join(dir, 'invalid.pdf'); await writeFile(invalidPath, 'not PDF');
   for (const name of ['zotero_save', 'zotero_import_pdf']) {
     const invalid = prepare(runtime());
@@ -73,14 +81,14 @@ try {
   for (const name of ['zotero_save', 'zotero_import_pdf']) {
     const conflict = prepare(runtime({ items: [parent], attachments: [{ key: 'BCDEFGHJ', parentItem: 'CDEFGHJK', md5: createHash('md5').update(bytes).digest('hex') }] }));
     await assert.rejects(tool(conflict, name).execute({ title, pdfPath, ...(name === 'zotero_save' ? { fetchOpenAccess: false } : {}) }), /different or standalone/);
-    assert.deepEqual(conflict.calls, ['search']); tests++;
+    assert.deepEqual(conflict.calls, ['targets', 'search']); tests++;
   }
   assert.throws(() => selectImportParent([{ ...parent, DOI: '', title: 'Methods' }], { title: 'Methods' }), /too short/); tests++;
   for (const entry of ['pdfPath', 'pdfUrl']) {
     const fresh = prepare(runtime());
     const value = await tool(fresh, 'zotero_save').execute({ title, [entry]: entry === 'pdfPath' ? pdfPath : 'https://example.org/paper.pdf', fetchOpenAccess: false });
     assert.equal(value.action, 'new'); assert.equal(value.parentItemKey, '');
-    assert.deepEqual(fresh.calls, ['search', 'targets', 'saveItem', 'updateSession', 'attachPdf']); tests++;
+    assert.deepEqual(fresh.calls, ['targets', 'search', 'saveItem', 'updateSession', 'attachPdf']); tests++;
     const failed = prepare(runtime({ attachError: new Error('upload failed') }));
     await assert.rejects(tool(failed, 'zotero_save').execute({ title, [entry]: entry === 'pdfPath' ? pdfPath : 'https://example.org/paper.pdf', fetchOpenAccess: false }), /条目已入库、PDF 未附上/);
     assert.equal(failed.calls.filter(call => call === 'saveItem').length, 1); tests++;

@@ -31,7 +31,7 @@ const SYSTEM_PROMPT = `## Zotero 文献获取（dsh-zotero-flow）
 2. **literature_lookup** —— 用 DOI / 标题 / arXiv 号解析规范元数据，并拿开放获取 PDF 直链。有 DOI 就一定先查，别凭记忆写标题和作者。
 3. **scholar_session** —— 需要机构订阅时，用 action=start 启动登录窗口，请用户完成学校登录；再用 action=goto 打开 DOI 落地页或目标数据库，读回 citation_pdf_url 与页面上的 PDF 链接。
 4. **scholar_download** —— 在同一个已登录会话里把 PDF 抓到本地。拿到 PDF 直链就传 url；只能人工点击的库（知网、万方、ProQuest）让用户点完下载，再不带 url 调用一次接管下载目录。
-4a. **下载后关页门槛** —— PDF 确认落盘成功后，立即按本篇精确 PII（ScienceDirect）或完整 DOI/已核对文章 URL，仅关闭本篇文章页及 PDF 页；随后调用 scholar_session action=tabs，确认本篇页面全部消失。核验通过后才能归档和打开下一篇。关页失败、缺少可靠匹配标识或核验失败时停止并报告“PDF 已下载、关页未核验、尚未归档”，复用本地文件，不重新下载。本机可用 D:/DDD/literuture/tools/close-scholar-tabs.ps1 的 -UrlLike 精确匹配模式；其他环境先确认可用的关页能力，没有则请用户手工关闭后再核验。保留浏览器窗口、about:blank、扩展、机构登录和待人工处理的验证页；禁止无参数全清、按域名泛关。action=close 只是断开连接，不算关页。下载失败/超时/人机校验不走成功清理分支。
+4a. **下载后关页门槛** —— PDF 确认落盘成功后，立即按本篇精确 PII（ScienceDirect）或完整 DOI/已核对文章 URL，仅关闭本篇文章页及 PDF 页；随后调用 scholar_session action=tabs，确认本篇页面全部消失。核验通过后才能归档和打开下一篇。关页失败、缺少可靠匹配标识或核验失败时停止并报告“PDF 已下载、关页未核验、尚未归档”，复用本地文件，不重新下载。优先核验插件自动清理的自建标签页；若仍有本篇残留，使用当前环境已核实的精确关页能力，只有明确确认属于本次流程的页面才可关闭，否则请用户手工关闭后再核验。保留浏览器窗口、about:blank、扩展、机构登录和待人工处理的验证页；禁止无参数全清、按域名泛关。action=close 只是断开连接，不算关页。下载失败/超时/人机校验不走成功清理分支。
 5. **zotero_save / zotero_import_pdf** —— 关页核验通过后用已落盘的 pdfPath 归档；逐篇流程不用 pdfUrl 合并下载与归档，以免跳过关页门槛。本来就有本地 PDF 且未为其打开页面的导入不需要关页。
    · 手上是 DOI 或在线 PDF → zotero_save
    · 手上是刚下载的本地 PDF → zotero_import_pdf（它会自己从 PDF 里抠 DOI）
